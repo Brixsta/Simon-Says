@@ -18,6 +18,34 @@ const global = {
   computerMoving: false,
   turn: 1,
   gameOverIndex: 0,
+  beeps: [
+    new Audio("./audio/beep1.m4a"),
+    new Audio("./audio/beep2.mp3"),
+    new Audio("./audio/beep3.mp3"),
+    new Audio("./audio/beep4.mp3"),
+  ],
+  ahh: new Audio("./audio/ahh.mp3"),
+};
+
+const adjustVolumeOfBeeps = () => {
+  const beeps = global.beeps;
+  beeps[0].volume = 0.2;
+  beeps[1].volume = 0.5;
+  beeps[2].volume = 0.4;
+  beeps[3].volume = 0.8;
+};
+
+const playBeep = () => {
+  const beeps = global.beeps;
+  if (global.activeArc.id === 1) {
+    beeps[0].play();
+  } else if (global.activeArc.id === 2) {
+    beeps[1].play();
+  } else if (global.activeArc.id === 3) {
+    beeps[2].play();
+  } else if (global.activeArc.id === 4) {
+    beeps[3].play();
+  }
 };
 
 const startGame = () => {
@@ -26,7 +54,6 @@ const startGame = () => {
   global.inPlay = true;
   computersTurn();
   startButton.setAttribute("disabled", true);
-  startButton.innerText = "Playing..";
   startButton.style.backgroundColor = "black";
   startButton.style.color = "white";
 };
@@ -56,7 +83,7 @@ const dropActiveArcs = () => {
 };
 
 const restartGame = () => {
-  console.log("restarting gaming");
+  global.ahh.play();
   global.inPlay = false;
   global.computerArcs = [];
   global.playerArcs = [];
@@ -69,12 +96,16 @@ const restartGame = () => {
   global.playerMoving = false;
   global.computerMoving = false;
   global.turn = 1;
-  startButton.removeAttribute("disabled");
+
   const turnNumberText = document.querySelector(".turn-number-text");
   turnNumberText.remove();
-  startButton.innerText = "Start";
-  startButton.style.backgroundColor = "white";
-  startButton.style.color = "black";
+  startButton.innerText = "Ouch..";
+  setTimeout(() => {
+    startButton.innerText = "Start";
+    startButton.removeAttribute("disabled");
+    startButton.style.backgroundColor = "white";
+    startButton.style.color = "black";
+  }, 1000);
 };
 
 const checkForGameOver = () => {
@@ -102,6 +133,7 @@ const playerClicksArc = (index) => {
     global.activeArc = global.arcs[index];
     global.arcs[index].active = true;
     global.playerArcs.push(global.arcs[index]);
+    playBeep();
     checkForGameOver();
     setTimeout(() => {
       dropActiveArcs();
@@ -123,6 +155,7 @@ const activateRandomArc = () => {
     global.activeArc = arcs[randomNumber];
     arcs[randomNumber].active = true;
     global.computerArcs.push(arcs[randomNumber]);
+    playBeep();
   }, 1000);
   setTimeout(() => {
     dropActiveArcs();
@@ -135,6 +168,7 @@ const activateArcByIndex = (index) => {
     global.mouseEnabled = false;
     global.activeArc = global.computerArcs[index];
     global.computerArcs[index].active = true;
+    playBeep();
   }, 1000);
   setTimeout(() => {
     dropActiveArcs();
@@ -143,6 +177,7 @@ const activateArcByIndex = (index) => {
 
 const computersTurn = () => {
   if (global.computerMoving) {
+    startButton.innerText = "Computer's Turn..";
     if (global.computerArcs.length) {
       activatePreviousArcs(0);
     } else {
@@ -153,6 +188,7 @@ const computersTurn = () => {
 
 const playersTurn = () => {
   if (global.playerMoving) {
+    startButton.innerText = "Player's Turn..";
     if (global.playerChoices === global.computerArcs.length) {
       endPlayersTurn();
     }
@@ -406,4 +442,5 @@ const counter = new Counter();
 const outline = new Outline();
 global.arcs.push(arc1, arc2, arc3, arc4);
 createLines();
+adjustVolumeOfBeeps();
 animate();

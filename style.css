@@ -19,14 +19,17 @@ button:disabled {
   user-select: none;
   background-color: white;
   color: black;
-  padding: 15px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
   font-size: 30px;
   border: none;
   border-radius: 30px;
   font-family: "Roboto", sans-serif;
   transition: all ease-in-out 400ms;
   border: solid 5px black;
-  width: 200px;
+  width: 300px;
 }
 
 button:hover {
