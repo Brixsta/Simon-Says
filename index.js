@@ -18,6 +18,8 @@ const global = {
   computerMoving: false,
   turn: 1,
   gameOverIndex: 0,
+  overCounter: false,
+  overSimon: false,
   beeps: [
     new Audio("./audio/beep1.m4a"),
     new Audio("./audio/beep2.mp3"),
@@ -25,6 +27,167 @@ const global = {
     new Audio("./audio/beep4.mp3"),
   ],
   ahh: new Audio("./audio/ahh.mp3"),
+};
+
+const handleStartButtonClick = () => {
+  startGame();
+};
+
+startButton.addEventListener("click", handleStartButtonClick);
+startButton.addEventListener("mouseover", () => {
+  startButton.style.backgroundColor = "black";
+  startButton.style.color = "white";
+});
+startButton.addEventListener("mouseout", () => {
+  if (!global.inPlay) {
+    startButton.style.backgroundColor = "white";
+    startButton.style.color = "black";
+  }
+});
+
+const getMouseCoordinates = (e) => {
+  const root = document.documentElement;
+  const rect = canvas.getBoundingClientRect();
+  let x = e.clientX - root.scrollLeft - rect.left;
+  let y = e.clientY - root.scrollTop - rect.top;
+  global.mouseX = x;
+  global.mouseY = y;
+};
+
+const handleMouseMove = (e) => {
+  getMouseCoordinates(e);
+};
+
+const handleMouseDown = () => {
+  if (global.mouseEnabled) global.clicked = true;
+};
+
+const handleMouseUp = () => {
+  global.clicked = false;
+};
+
+window.addEventListener("mousemove", handleMouseMove);
+window.addEventListener("mousedown", handleMouseDown);
+window.addEventListener("mouseup", handleMouseUp);
+
+const startGame = () => {
+  displayTurnNumber();
+  global.computerMoving = true;
+  global.inPlay = true;
+  computersTurn();
+  startButton.style.transition = "all ease-in-out 500ms";
+  startButton.setAttribute("disabled", true);
+  startButton.style.backgroundColor = "black";
+  startButton.style.color = "white";
+};
+
+const computersTurn = () => {
+  if (global.computerMoving) {
+    startButton.innerText = "Computer's Turn..";
+    if (global.computerArcs.length) {
+      activatePreviousArcs(0);
+    } else {
+      activateRandomArc();
+    }
+  }
+};
+
+const activateRandomArc = () => {
+  setTimeout(() => {
+    const arcs = global.arcs;
+    const randomNumber = Math.floor(Math.random() * arcs.length);
+    global.activeArc = arcs[randomNumber];
+    arcs[randomNumber].active = true;
+    global.computerArcs.push(arcs[randomNumber]);
+    playBeep();
+  }, 1000);
+  setTimeout(() => {
+    dropActiveArcs();
+    endComputersTurn();
+  }, 2000);
+};
+
+const activatePreviousArcs = (index) => {
+  if (index === global.computerArcs.length) {
+    activateRandomArc();
+  } else {
+    activateArcByIndex(index);
+    setTimeout(() => {
+      activatePreviousArcs(index + 1);
+    }, 2000);
+  }
+};
+
+const activateArcByIndex = (index) => {
+  setTimeout(() => {
+    global.mouseEnabled = false;
+    global.activeArc = global.computerArcs[index];
+    global.computerArcs[index].active = true;
+    playBeep();
+  }, 1000);
+  setTimeout(() => {
+    dropActiveArcs();
+  }, 2000);
+};
+
+const dropActiveArcs = () => {
+  for (let i = 0; i < global.arcs.length; i++) {
+    global.arcs[i].active = false;
+    global.activeArc = [];
+  }
+};
+
+const endComputersTurn = () => {
+  global.computerMoving = false;
+  global.playerMoving = true;
+  global.mouseEnabled = true;
+};
+
+const playersTurn = () => {
+  if (global.playerMoving) {
+    startButton.innerText = "Your Turn..";
+    if (global.playerChoices === global.computerArcs.length) {
+      endPlayersTurn();
+    }
+  }
+};
+
+const playerClicksArc = (index) => {
+  if (!global.activeArc.length && global.mouseEnabled && global.playerMoving) {
+    global.clicked = false;
+    global.mouseEnabled = false;
+    global.playerChoices++;
+    global.activeArc = global.arcs[index];
+    global.arcs[index].active = true;
+    global.playerArcs.push(global.arcs[index]);
+    playBeep();
+    checkForGameOver();
+    setTimeout(() => {
+      dropActiveArcs();
+      global.mouseEnabled = true;
+    }, 1000);
+  }
+};
+
+const endPlayersTurn = () => {
+  global.playerArcs = [];
+  global.playerChoices = 0;
+  global.playerMoving = false;
+  global.computerMoving = true;
+  global.mouseEnabled = false;
+  setTimeout(() => {
+    incrementTurnNumber();
+    computersTurn();
+  }, 1000);
+};
+
+const changeCursorToPointer = () => {
+  const wrapper = document.querySelector(".wrapper");
+  if (global.overSimon) {
+    wrapper.style.cursor = "pointer";
+  } else if (!global.overSimon) {
+    wrapper.style.cursor = "default";
+  }
 };
 
 const adjustVolumeOfBeeps = () => {
@@ -48,16 +211,6 @@ const playBeep = () => {
   }
 };
 
-const startGame = () => {
-  displayTurnNumber();
-  global.computerMoving = true;
-  global.inPlay = true;
-  computersTurn();
-  startButton.setAttribute("disabled", true);
-  startButton.style.backgroundColor = "black";
-  startButton.style.color = "white";
-};
-
 const displayTurnNumber = () => {
   const canvasContainer = document.querySelector(".canvas-container");
   const turnNumberContainer = document.createElement("div");
@@ -73,13 +226,6 @@ const incrementTurnNumber = () => {
   global.turn++;
   const turnNumberText = document.querySelector(".turn-number-text");
   turnNumberText.innerText = global.turn;
-};
-
-const dropActiveArcs = () => {
-  for (let i = 0; i < global.arcs.length; i++) {
-    global.arcs[i].active = false;
-    global.activeArc = [];
-  }
 };
 
 const restartGame = () => {
@@ -120,134 +266,9 @@ const checkForGameOver = () => {
     cpu.push(global.computerArcs[i].id);
   }
   if (player[index] !== cpu[index]) {
-    console.log("game over");
     restartGame();
   }
 };
-
-const playerClicksArc = (index) => {
-  if (!global.activeArc.length && global.mouseEnabled && global.playerMoving) {
-    global.clicked = false;
-    global.mouseEnabled = false;
-    global.playerChoices++;
-    global.activeArc = global.arcs[index];
-    global.arcs[index].active = true;
-    global.playerArcs.push(global.arcs[index]);
-    playBeep();
-    checkForGameOver();
-    setTimeout(() => {
-      dropActiveArcs();
-      global.mouseEnabled = true;
-    }, 1000);
-  }
-};
-
-const endComputersTurn = () => {
-  global.computerMoving = false;
-  global.playerMoving = true;
-  global.mouseEnabled = true;
-};
-
-const activateRandomArc = () => {
-  setTimeout(() => {
-    const arcs = global.arcs;
-    const randomNumber = Math.floor(Math.random() * arcs.length);
-    global.activeArc = arcs[randomNumber];
-    arcs[randomNumber].active = true;
-    global.computerArcs.push(arcs[randomNumber]);
-    playBeep();
-  }, 1000);
-  setTimeout(() => {
-    dropActiveArcs();
-    endComputersTurn();
-  }, 2000);
-};
-
-const activateArcByIndex = (index) => {
-  setTimeout(() => {
-    global.mouseEnabled = false;
-    global.activeArc = global.computerArcs[index];
-    global.computerArcs[index].active = true;
-    playBeep();
-  }, 1000);
-  setTimeout(() => {
-    dropActiveArcs();
-  }, 2000);
-};
-
-const computersTurn = () => {
-  if (global.computerMoving) {
-    startButton.innerText = "Computer's Turn..";
-    if (global.computerArcs.length) {
-      activatePreviousArcs(0);
-    } else {
-      activateRandomArc();
-    }
-  }
-};
-
-const playersTurn = () => {
-  if (global.playerMoving) {
-    startButton.innerText = "Player's Turn..";
-    if (global.playerChoices === global.computerArcs.length) {
-      endPlayersTurn();
-    }
-  }
-};
-
-const endPlayersTurn = () => {
-  global.playerArcs = [];
-  global.playerChoices = 0;
-  global.playerMoving = false;
-  global.computerMoving = true;
-  global.mouseEnabled = false;
-  setTimeout(() => {
-    incrementTurnNumber();
-    computersTurn();
-  }, 1000);
-};
-
-const activatePreviousArcs = (index) => {
-  if (index === global.computerArcs.length) {
-    activateRandomArc();
-  } else {
-    activateArcByIndex(index);
-    setTimeout(() => {
-      activatePreviousArcs(index + 1);
-    }, 2000);
-  }
-};
-
-const handleStartButtonClick = () => {
-  startGame();
-};
-
-startButton.addEventListener("click", handleStartButtonClick);
-
-const getMouseCoordinates = (e) => {
-  const root = document.documentElement;
-  const rect = canvas.getBoundingClientRect();
-  let x = e.clientX - root.scrollLeft - rect.left;
-  let y = e.clientY - root.scrollTop - rect.top;
-  global.mouseX = x;
-  global.mouseY = y;
-};
-
-const handleMouseMove = (e) => {
-  getMouseCoordinates(e);
-};
-
-const handleMouseDown = () => {
-  if (global.mouseEnabled) global.clicked = true;
-};
-
-const handleMouseUp = () => {
-  global.clicked = false;
-};
-
-window.addEventListener("mousemove", handleMouseMove);
-window.addEventListener("mousedown", handleMouseDown);
-window.addEventListener("mouseup", handleMouseUp);
 
 class Arc {
   constructor(start, end, id) {
@@ -295,7 +316,12 @@ class Arc {
       dy = this.y - global.mouseY;
     }
     distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance < this.radius && global.clicked && global.mouseEnabled) {
+    if (
+      distance < this.radius &&
+      global.clicked &&
+      global.mouseEnabled &&
+      !global.overCounter
+    ) {
       if (
         global.mouseX > canvas.width / 2 &&
         global.mouseY < canvas.height / 2
@@ -320,6 +346,26 @@ class Arc {
       ) {
         playerClicksArc(3); // blue
       }
+    }
+  }
+
+  overSimon() {
+    let dx, dy, distance;
+    if (global.mouseX > this.x) {
+      dx = global.mouseX - this.x;
+    } else {
+      dx = this.x - global.mouseX;
+    }
+    if (global.mouseY > this.y) {
+      dy = global.mouseY - this.y;
+    } else {
+      dy = this.y - global.mouseY;
+    }
+    distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < this.radius && !global.overCounter) {
+      global.overSimon = true;
+    } else {
+      global.overSimon = false;
     }
   }
 }
@@ -353,9 +399,9 @@ class Counter {
     }
     distance = Math.sqrt(dx * dx + dy * dy);
     if (distance < this.radius) {
-      this.mouseOver = true;
+      global.overCounter = true;
     } else {
-      this.mouseOver = false;
+      global.overCounter = false;
     }
   }
 }
@@ -423,6 +469,7 @@ const animate = () => {
   global.arcs.forEach((arc) => {
     arc.draw();
     arc.mouseCollision();
+    arc.overSimon();
   });
   outline.draw();
   global.lines.forEach((line) => {
@@ -431,6 +478,7 @@ const animate = () => {
   playersTurn();
   counter.draw();
   counter.mouseCollision();
+  changeCursorToPointer();
   window.requestAnimationFrame(animate);
 };
 

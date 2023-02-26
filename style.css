@@ -34,12 +34,6 @@ button:disabled {
 
 button:hover {
   cursor: pointer;
-  background-color: black;
-  color: white;
-}
-
-button:active {
-  transform: scale(0.99);
 }
 
 .canvas-container {
