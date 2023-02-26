@@ -193,9 +193,9 @@ const changeCursorToPointer = () => {
 const adjustVolumeOfBeeps = () => {
   const beeps = global.beeps;
   beeps[0].volume = 0.2;
-  beeps[1].volume = 0.5;
-  beeps[2].volume = 0.4;
-  beeps[3].volume = 0.8;
+  beeps[1].volume = 0.1;
+  beeps[2].volume = 0.1;
+  beeps[3].volume = 0.2;
 };
 
 const playBeep = () => {
