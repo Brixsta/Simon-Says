@@ -1,6 +1,6 @@
 # Simon Says
 
-[Simon Says](https://brixsta.github.io/Simon-Says/)
+[View Simon Says](https://brixsta.github.io/Simon-Says/)
 
 - Vanilla JS
 - Used HTML Canvas to draw the arcs, would probably have been easier with traditional DOM elements
